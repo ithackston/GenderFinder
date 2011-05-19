@@ -9,8 +9,6 @@ public class Wormhole {
 	public static final String DEFAULT_DIRNAME_F = "Female/";
 	public static final String DEFAULT_DIRNAME_T = "Test/";
 	
-	public static enum Facetype {male,female,test};
-	
 	/**
 	 * Prints usage instructions.
 	 */
@@ -90,12 +88,12 @@ public class Wormhole {
 		
 		try {
 			if(train) {
-				read(dirNameMale,Facetype.male);
-				read(dirNameFemale,Facetype.female);
+				read(dirNameMale,Face.Facetype.male);
+				read(dirNameFemale,Face.Facetype.female);
 			}
 			
 			if(test) {
-				read(dirNameTest,Facetype.test);
+				read(dirNameTest,Face.Facetype.test);
 			}
 		} catch(IOException e) {
 			System.err.println("Invalid Image Directory: " + e.getMessage());
@@ -125,7 +123,7 @@ public class Wormhole {
 	 * @param dirName
 	 * @throws IOException
 	 */
-	public static void read(String dirName, Facetype type) throws IOException {
+	public static void read(String dirName, Face.Facetype type) throws IOException {
 		String[] images = getContents(dirName);
 		
 		if(images == null) {

@@ -5,13 +5,14 @@ import java.io.IOException;
  * @param args
  */
 public class Face {
+	public static enum Facetype {male,female,test};
 	public static final int width = 128;
 	public static final int height = 120;
-	public Wormhole.Facetype type;
+	public Facetype type;
 	private int[][] grid;
 	private String name;
 	
-	public Face(String name, String raw, Wormhole.Facetype type) throws IOException {
+	public Face(String name, String raw, Facetype type) throws IOException {
 		this.grid = new int[height][width]; //row major grid (grid[0][1] = row 0, col 1)
 		this.name = name;
 		this.type = type;
