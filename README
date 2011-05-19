@@ -1,0 +1,23 @@
+ECS170 Assignment #3: Connectionist Architectures and Ensemble Techniques
+Due:	05/30/2010 
+Marks:	15% of final grade. Late Policy: Must be submitted by 05/30/2010 otherwise no pointsawarded.
+The assignment must be completed by your team and implementation of the neural network should be written by yourself.
+This assignment attempts to show you how to use learning algorithms in practice. When we see a person, we can instantly categorize them as being female or male. In this project you will create a neural network that will classify a portrait image as being either that of a male or female with each person being pictured in any one or more of two poses.
+You shall then determine the expected generalization error using cross validation and then attempt to understand on what basis these predictive decisions are being made.
+Implement a feed forward neural network that uses SIGMOID units. The model should be learnt using a stochastic gradient descent back-propagation scheme. You can implement more complex variations such as momentum terms and weight decay if you wish. The neural network will need to perform both TRAIN and TEST functions. The network will begin by learning to recognize the gender (male or female) of a facial image. Use the training data set provided on the course web site. Each picture consists of 128 x 120 pixels with a range of intensities that represent a level of grayness.
+Evaluating Performance
+
+1. Fully describe the network architecture and why it was chosen. How many input/hidden/output layer nodes? Fully connected or partially connected? etc. Submit your code as: <teamname.java>. Your code should be compilable on our CSIF machines and have a -train option (that looks in the female (here) and male directory (here) and -test option that reads in the data (from the here directory) in the format I have given it to you. (20 points)
+
+2. You shall now verify the estimated generalization error. Randomly divide the training data into a five folds. Perform 5-fold cross-validation and repeat ten times. List the mean and standard deviation of the training and test accuracies for each of the 10 experiments. Report your approximation of the learner . Submit your results as a writeup in PDF format. (20 points)
+
+3. Try your neural network on the test set available on the course home page. This test set contains pictures similar to the training set, but also other pictures of non-graduate males and female students. For each instance, report in machine readable format, the prediction and confidence of your neural network. One prediction {MALE, FEMALE} per line and the confidence in the order given. Explain how you derived your confidence estimate. Submit your predictions as <teamname.predictions> (20 points).
+
+Understanding the Network Behavior
+
+4. For each hidden layer node visualize your weight map. Submit a one paragraph write up on interpreting how the network is making decisions. Submit your results as a writeup in PDF format. (20 points)
+
+For the interested student
+
+Try using TANH units Experiment with differing topologies with respect to:
+Number of hidden layer nodes and hidden layers. Fully versus partial connection of neurons. Allowing neurons to connect to other neurons on the same level. Ordering of the training instances. What changes effect the overall accuracy?
