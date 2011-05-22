@@ -135,7 +135,7 @@ public class Wormhole {
 			try {
 				// TODO Store the images. This simply reads and discards them.
 				new Face(img,readFile(img),type);
-			} catch(IOException e) {
+			} catch(Exception e) {
 				System.err.println("Invalid Image File: " + e.getMessage());
 				System.exit(4);
 			}

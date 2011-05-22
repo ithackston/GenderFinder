@@ -1,4 +1,3 @@
-import java.io.IOException;
 
 /**
  * Stores a single face image.
@@ -8,24 +7,51 @@ public class Face {
 	public static enum Facetype {male,female,test};
 	public static final int width = 128;
 	public static final int height = 120;
+	public static final int area = width*height;
 	public Facetype type;
-	private int[][] grid;
+	private int[] grid;
 	private String name;
 	
-	public Face(String name, String raw, Facetype type) throws IOException {
-		this.grid = new int[height][width]; //row major grid (grid[0][1] = row 0, col 1)
+	/**
+	 * Face constructor.
+	 * @param name
+	 * @param raw
+	 * @param type
+	 * @throws Exception
+	 */
+	public Face(String name, String raw, Facetype type) throws Exception {
+		this.grid = new int[area];
 		this.name = name;
 		this.type = type;
 		
 		//parse grid
 		String[] rawgrid = raw.split("[ \n\r]+");
 		
-		for(int i = 0; i < height; i++) {
-			for(int j = 0; j < width; j++) {
-				grid[i][j] = Integer.valueOf(rawgrid[width * i + j]);
+		//copy as integers
+		for(int i = 0; i < area; i++) {
+			if(i > rawgrid.length - 1) {
+				throw new Exception("Incomplete input data. Not enough pixels.");
 			}
+			grid[i] = Integer.valueOf(rawgrid[i]);
 		}
 	}
 	
-	public void printName() {System.out.println(name);} //used in debugging
+	/**
+	 * Face constructor.
+	 * @param x
+	 * @param y
+	 * @throws Exception
+	 */
+	public int getPixel(int x, int y) throws Exception {
+		if(x > width || y > height || x < 1 || y < 1) {
+			throw new Exception("Coordinates out of bounds.");
+		}
+		
+		//1,1 is the top left pixel; width,height bottom right
+		return grid[width * (y - 1) + (x - 1)]; 
+	}
+	
+	public String getName() {
+		return name;
+	}
 }
