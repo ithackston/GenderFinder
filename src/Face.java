@@ -9,8 +9,8 @@ public class Face {
 	public static final int height = 120;
 	public static final int area = width*height;
 	public Facetype type;
-	private int[] grid;
-	private String name;
+	public int[] grid;
+	public String name;
 	
 	/**
 	 * Face constructor.
