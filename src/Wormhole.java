@@ -2,12 +2,17 @@ import java.io.*;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 
 
 public class Wormhole {
 	public static final String DEFAULT_DIRNAME_M = "Male/";		//default directory names
 	public static final String DEFAULT_DIRNAME_F = "Female/";
 	public static final String DEFAULT_DIRNAME_T = "Test/";
+	
+	private static NeuralNet NN;
+	private static ArrayList<Face> trainSet;
+	private static ArrayList<Face> testSet;
 	
 	/**
 	 * Prints usage instructions.
@@ -87,13 +92,20 @@ public class Wormhole {
 		}
 		
 		try {
+			NN = new NeuralNet();
+			
 			if(train) {
-				read(dirNameMale,Face.Facetype.male);
-				read(dirNameFemale,Face.Facetype.female);
+				trainSet = new ArrayList<Face>();
+				read(dirNameMale,Face.Facetype.male,trainSet);
+				read(dirNameFemale,Face.Facetype.female,trainSet);
+				NN.initialize(trainSet);
+				train();
 			}
 			
 			if(test) {
-				read(dirNameTest,Face.Facetype.test);
+				testSet = new ArrayList<Face>();
+				read(dirNameTest,Face.Facetype.test,testSet);
+				test();
 			}
 		} catch(IOException e) {
 			System.err.println("Invalid Image Directory: " + e.getMessage());
@@ -105,7 +117,7 @@ public class Wormhole {
 	 * Gets and returns the valid face files of the given directory name.
 	 * @param dirName
 	 */
-	public static String[] getContents(String dirName) {
+	private static String[] getContents(String dirName) {
 		File dir = new File(dirName);
 
 		FilenameFilter filter = new FilenameFilter() {
@@ -123,7 +135,7 @@ public class Wormhole {
 	 * @param dirName
 	 * @throws IOException
 	 */
-	public static void read(String dirName, Face.Facetype type) throws IOException {
+	private static void read(String dirName, Face.Facetype type, ArrayList<Face> set) throws IOException {
 		String[] images = getContents(dirName);
 		
 		if(images == null) {
@@ -133,8 +145,7 @@ public class Wormhole {
 		for(String img : images) {
 			img = dirName + "/" + img;
 			try {
-				// TODO Store the images. This simply reads and discards them.
-				new Face(img,readFile(img),type);
+				set.add(new Face(img,readFile(img),type));
 			} catch(Exception e) {
 				System.err.println("Invalid Image File: " + e.getMessage());
 				System.exit(4);
@@ -161,4 +172,17 @@ public class Wormhole {
 		}
 	}
 	
+	/**
+	 * Train the network with the trainSet.
+	 * Use 5-fold cross evaluation at some point.
+	 */
+	private static void train() {
+	}
+	
+	/**
+	 * Test the network on the testSet.
+	 */
+	private static boolean test() {
+		return false;
+	}
 }
