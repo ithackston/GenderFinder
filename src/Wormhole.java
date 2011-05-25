@@ -4,7 +4,10 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
-
+/**
+ * class Wormhole
+ * Main class
+ */
 public class Wormhole {
 	public static final String DEFAULT_DIRNAME_M = "Male/";		//default directory names
 	public static final String DEFAULT_DIRNAME_F = "Female/";
@@ -98,7 +101,7 @@ public class Wormhole {
 				trainSet = new ArrayList<Face>();
 				read(dirNameMale,Face.Facetype.male,trainSet);
 				read(dirNameFemale,Face.Facetype.female,trainSet);
-				NN.initialize(trainSet);
+				NN.initialize();
 				train();
 			}
 			
@@ -121,10 +124,10 @@ public class Wormhole {
 		File dir = new File(dirName);
 
 		FilenameFilter filter = new FilenameFilter() {
-		    public boolean accept(File dir, String name) {
-		    	//only list non-hidden .txt files
-		        return !name.startsWith(".") && name.endsWith(".txt");
-		    }
+			public boolean accept(File dir, String name) {
+				//only list non-hidden .txt files
+				return !name.startsWith(".") && name.endsWith(".txt");
+			}
 		};
 		
 		return dir.list(filter);

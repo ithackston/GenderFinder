@@ -1,53 +1,111 @@
-import java.util.ArrayList;
+import java.util.Random;
 
+/**
+ * Reads and stores the valid face files of the given directory name.
+ * @param dirName
+ * @throws IOException
+ */
 public class NeuralNet {
+	// Warning: modifying some of these values may cause errors in the code.
 	private static final int LAYER_SIZE_INPUT = Face.width * Face.height;
 	private static final int LAYER_SIZE_HIDDEN = 400;
-	private static final int LAYER_SIZE_OUTPUT = 1;
+	private static final int LAYER_SIZE_OUTPUT = 2;
 	private static final int NUM_HIDDEN_LAYERS = 2;
+	private static final double LEARNING_RATE = 0.2;
 	
+	/**
+	 * Input node
+	 */
 	public class Input {
 		public double value;
 		public double[] weights;      
 	};
-	                    
+	  
+	/**
+	 * Perceptron node
+	 */
 	public class Sigmoid {                
 		public double inputSum;
 		public double output;
 		public double error;
 		public double[] weights;
 	};
-	                  
+	
+	/**
+	 * Output node
+	 */          
 	public class Output {                
 		public double inputSum;
 		public double output;
 		public double error;
 		public double target;
-		public double value;
+		public Face.Facetype value;
 	};
-	 
-	 // network layers
-	 private Input[] layerInput;
-	 private Sigmoid[][] layerHidden;
-	 private Output[] layerOutput;
-	 
-	 public NeuralNet() {
-		 layerInput = new Input[LAYER_SIZE_INPUT];
-		 layerHidden = new Sigmoid[NUM_HIDDEN_LAYERS][LAYER_SIZE_HIDDEN];
-		 layerOutput = new Output[LAYER_SIZE_OUTPUT];
-	 }
-	 
-	 public void initialize(ArrayList<Face> trainSet) {
-		// TODO initialize weights, InputLayer[i].Weights[j] = 0.01 + ((double)rand.Next(0, 5) / 100);
-		 // TODO initialize output values
-		 	// foreachvalue = face.type == Face.male ? 1.0 : 0.0
-	 }
-	 
-	 private double sigmoid(double x) {
-		 return (1 / (1 + Math.exp(-x)));
-	 }
-	 
-	 private void forwardPropagate(Face face) {
+	
+	// network layers
+	private Input[] layerInput;
+	private Sigmoid[][] layerHidden;
+	private Output[] layerOutput;
+	
+	/**
+	 * Constructor. Initializes layer arrays.
+	 */
+	public NeuralNet() {
+		layerInput = new Input[LAYER_SIZE_INPUT];
+		layerHidden = new Sigmoid[NUM_HIDDEN_LAYERS][LAYER_SIZE_HIDDEN];
+		layerOutput = new Output[LAYER_SIZE_OUTPUT];
+	}
+	
+	/**
+	 * Initialize nodes, weights, and output values.
+	 */
+	public void initialize() {
+		Random random = new Random();
+		
+		// initialize input layer weights to a random number x | 0 < x < 8.1
+		for(int i = 0; i < LAYER_SIZE_INPUT; i++) {
+			layerInput[i].weights = new double[LAYER_SIZE_HIDDEN];
+			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
+				layerInput[i].weights[j] = 0.01 + random.nextDouble() * 8;
+			}
+		}
+		
+		// initialize hidden layer weights to a random number x | 0 < x < 8.1
+		for(int i = 0; i < NUM_HIDDEN_LAYERS; i++) {
+			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
+				if(i != NUM_HIDDEN_LAYERS - 1) {
+					layerHidden[i][j].weights = new double[LAYER_SIZE_HIDDEN];
+					for(int k = 0; k < LAYER_SIZE_HIDDEN; k++) {
+						layerHidden[i][j].weights[k] = 0.01 + random.nextDouble() * 8;
+					}
+				} else {
+					// last hidden layer connected to output layer
+					layerHidden[i][j].weights = new double[LAYER_SIZE_OUTPUT];
+					for(int k = 0; k < LAYER_SIZE_OUTPUT; k++) {
+						layerHidden[i][j].weights[k] = 0.01 + random.nextDouble() * 8;
+					}
+				}
+			}
+		}
+		
+		// initialize possible output values
+		layerOutput[0].value = Face.Facetype.male;
+		layerOutput[1].value = Face.Facetype.female;
+	}
+	
+	/**
+	 * Sigmoid function.
+	 * @param x
+	 */
+	private double sigmoid(double x) {
+		return (1 / (1 + Math.exp(-x)));
+	}
+	
+	/**
+	 * Forward propagate a Face input through the network.
+	 * @param face
+	 */
+	private void forwardPropagate(Face face) {
 		// copy input
 		for(int i = 0; i < LAYER_SIZE_INPUT; i++) {
 			layerInput[i].value = face.grid[i];
@@ -55,8 +113,8 @@ public class NeuralNet {
 		
 		// calculate hidden layers
 		for(int i = 0; i < NUM_HIDDEN_LAYERS; i++) {
-			double total = 0.0;
 			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
+				double total = 0.0;
 				if(i > 0) {
 					for(int k = 0; k < LAYER_SIZE_HIDDEN; k++) {
 						total += layerHidden[i-1][k].output * layerHidden[i-1][k].weights[j];
@@ -80,16 +138,54 @@ public class NeuralNet {
 			}
 			layerOutput[i].inputSum = total;
 			layerOutput[i].output = sigmoid(total);
-			layerOutput[i].target = layerOutput[i].value == layerOutput[i].output ? 1.0 : 0.0;
+			layerOutput[i].target = layerOutput[i].value == face.type ? 1.0 : 0.0;
 			layerOutput[i].error = (layerOutput[i].target - layerOutput[i].output) * layerOutput[i].output * (1 - layerOutput[i].output);
 		}
-	 }
-	 
-	 private void backPropagate() {
-		// TODO fix errors in hidden layers
-		// TODO fix errors in output layer
-		// TODO fix weights in input layer
-		// TODO fix weights in hidden layers
-		// TODO fix weights in output layer
-	 }
+	}
+	
+	/**
+	 * Back propagate errors through the network to adjust weights.
+	 */
+	private void backPropagate() {
+		// fix errors in hidden layers
+		for(int i = 0; i < NUM_HIDDEN_LAYERS; i++) {
+			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
+				double total = 0.0;
+				if(i != NUM_HIDDEN_LAYERS - 1) {
+					for(int k = 0; k < LAYER_SIZE_HIDDEN; k++) {
+						total += layerHidden[i][j].weights[k] * layerHidden[i+1][k].error;
+					}
+				} else {
+					// last hidden layer; calculate from output layer
+					for(int k = 0; k < LAYER_SIZE_OUTPUT; k++) {
+						total += layerHidden[i][j].weights[k] * layerOutput[k].error;
+					}
+				}
+				layerHidden[i][j].error = total;
+			}
+		}
+		
+		// fix weights in input layer
+		for(int i = 0; i < LAYER_SIZE_INPUT; i++) {
+			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
+				layerInput[i].weights[j] += LEARNING_RATE * layerHidden[0][j].error * layerInput[i].value;
+			}
+		}
+		
+		// fix weights in hidden layers
+		for(int i = 0; i < NUM_HIDDEN_LAYERS; i++) {
+			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
+				if(i != NUM_HIDDEN_LAYERS - 1) {
+					for(int k = 0; k < LAYER_SIZE_HIDDEN; k++) {
+						layerHidden[i][j].weights[k] = LEARNING_RATE * layerHidden[i+1][k].error * layerHidden[i][j].output;
+					}
+				} else {
+					// last hidden layer; calculate from output layer
+					for(int k = 0; k < LAYER_SIZE_OUTPUT; k++) {
+						layerHidden[i][j].weights[k] = LEARNING_RATE * layerOutput[k].error * layerHidden[i][j].output;
+					}
+				}
+			}
+		}
+	}
 }
