@@ -12,10 +12,16 @@ public class Wormhole {
 	public static final String DEFAULT_DIRNAME_M = "Male/";		//default directory names
 	public static final String DEFAULT_DIRNAME_F = "Female/";
 	public static final String DEFAULT_DIRNAME_T = "Test/";
+	public static final double MAX_ERROR = 1.0;
+	public static final int MAX_ITERATIONS = 1000;
 	
 	private static NeuralNet NN;
 	private static ArrayList<Face> trainSet;
 	private static ArrayList<Face> testSet;
+	
+	private static int countMale;
+	private static int countFemale;
+	private static int countTest;
 	
 	/**
 	 * Prints usage instructions.
@@ -48,6 +54,10 @@ public class Wormhole {
 		String dirNameTest = DEFAULT_DIRNAME_T;
 		boolean train = false;
 		boolean test = false;
+		
+		countMale = 0;
+		countFemale = 0;
+		countTest = 0;
 		
 		// Parse through the command line arguments
 		try
@@ -149,6 +159,19 @@ public class Wormhole {
 			img = dirName + "/" + img;
 			try {
 				set.add(new Face(img,readFile(img),type));
+				switch(type) {
+					case female:
+						countFemale++;
+						break;
+					case male:
+						countMale++;
+						break;
+					case test:
+						countTest++;
+						break;
+					default:
+						break;
+				}
 			} catch(Exception e) {
 				System.err.println("Invalid Image File: " + e.getMessage());
 				System.exit(4);
@@ -180,6 +203,28 @@ public class Wormhole {
 	 * Use 5-fold cross evaluation at some point.
 	 */
 	private static void train() {
+		double error = 0.0;
+		int i = 0;
+		
+		System.out.println("Training neural network on " +
+				countMale +" male faces and " +
+				countFemale + " female faces:");
+		System.out.println("\ti\terror");
+		
+		do {
+			error = 0.0;
+			for(int j = 0; j < trainSet.size(); j++) {
+				NN.forwardPropagate(trainSet.get(j));
+				NN.backPropagate();
+				error += NN.getError();
+			}
+			i++;
+			
+			//if(i % 4 == 0) {
+				// print training status every 4 iterations
+				System.out.println("\t"+i+"\t"+error);
+			//}
+		} while(error > MAX_ERROR && i < MAX_ITERATIONS);
 	}
 	
 	/**

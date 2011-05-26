@@ -8,7 +8,7 @@ import java.util.Random;
 public class NeuralNet {
 	// Warning: modifying some of these values may cause errors in the code.
 	private static final int LAYER_SIZE_INPUT = Face.width * Face.height;
-	private static final int LAYER_SIZE_HIDDEN = 400;
+	private static final int LAYER_SIZE_HIDDEN = 40;
 	private static final int LAYER_SIZE_OUTPUT = 2;
 	private static final int NUM_HIDDEN_LAYERS = 2;
 	private static final double LEARNING_RATE = 0.2;
@@ -64,6 +64,7 @@ public class NeuralNet {
 		
 		// initialize input layer weights to a random number x | 0 < x < 8.1
 		for(int i = 0; i < LAYER_SIZE_INPUT; i++) {
+			layerInput[i] = new Input();
 			layerInput[i].weights = new double[LAYER_SIZE_HIDDEN];
 			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
 				layerInput[i].weights[j] = 0.01 + random.nextDouble() * 8;
@@ -73,6 +74,7 @@ public class NeuralNet {
 		// initialize hidden layer weights to a random number x | 0 < x < 8.1
 		for(int i = 0; i < NUM_HIDDEN_LAYERS; i++) {
 			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
+				layerHidden[i][j] = new Sigmoid();
 				if(i != NUM_HIDDEN_LAYERS - 1) {
 					layerHidden[i][j].weights = new double[LAYER_SIZE_HIDDEN];
 					for(int k = 0; k < LAYER_SIZE_HIDDEN; k++) {
@@ -89,7 +91,9 @@ public class NeuralNet {
 		}
 		
 		// initialize possible output values
+		layerOutput[0] = new Output();
 		layerOutput[0].value = Face.Facetype.male;
+		layerOutput[1] = new Output();
 		layerOutput[1].value = Face.Facetype.female;
 	}
 	
@@ -105,7 +109,7 @@ public class NeuralNet {
 	 * Forward propagate a Face input through the network.
 	 * @param face
 	 */
-	private void forwardPropagate(Face face) {
+	public void forwardPropagate(Face face) {
 		// copy input
 		for(int i = 0; i < LAYER_SIZE_INPUT; i++) {
 			layerInput[i].value = face.grid[i];
@@ -146,7 +150,7 @@ public class NeuralNet {
 	/**
 	 * Back propagate errors through the network to adjust weights.
 	 */
-	private void backPropagate() {
+	public void backPropagate() {
 		// fix errors in hidden layers
 		for(int i = 0; i < NUM_HIDDEN_LAYERS; i++) {
 			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
@@ -187,5 +191,63 @@ public class NeuralNet {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Forward propagate a test Face and return the Facetype (gender).
+	 */
+	public Face.Facetype test(Face face) {
+		// copy input
+		for(int i = 0; i < LAYER_SIZE_INPUT; i++) {
+			layerInput[i].value = face.grid[i];
+		}
+		
+		// calculate hidden layers
+		for(int i = 0; i < NUM_HIDDEN_LAYERS; i++) {
+			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
+				double total = 0.0;
+				if(i > 0) {
+					for(int k = 0; k < LAYER_SIZE_HIDDEN; k++) {
+						total += layerHidden[i-1][k].output * layerHidden[i-1][k].weights[j];
+					}
+				} else {
+					// first hidden layer; calculate from input layer
+					for(int k = 0; k < LAYER_SIZE_INPUT; k++) {
+						total += layerInput[k].value * layerInput[k].weights[j];
+					}
+				}
+				layerHidden[i][j].inputSum = total;
+				layerHidden[i][j].output = sigmoid(total);
+			}
+		}
+		
+		// calculate output
+		double max = -1;
+		Face.Facetype output = Face.Facetype.test;
+		
+		for(int i = 0; i < LAYER_SIZE_OUTPUT; i++) {
+			double total = 0.0;
+			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
+				total += layerHidden[NUM_HIDDEN_LAYERS - 1][j].output * layerHidden[NUM_HIDDEN_LAYERS-1][j].weights[i];
+			}
+			layerOutput[i].inputSum = total;
+			layerOutput[i].output = sigmoid(total);
+			if(layerOutput[i].output > max) {
+				max = layerOutput[i].output;
+				output = layerOutput[i].value;
+			}
+		}
+		
+		return output;
+	}
+	
+	public double getError() {
+		double total = 0.0;
+		
+		for(int i = 0; i < LAYER_SIZE_OUTPUT; i++) {
+			total += Math.pow((layerOutput[i].target - layerOutput[i].output), 2) / 2;
+		}
+		
+		return total;
 	}
 }
