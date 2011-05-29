@@ -11,7 +11,7 @@ public class NeuralNet {
 	private static final int LAYER_SIZE_HIDDEN = 40;
 	private static final int LAYER_SIZE_OUTPUT = 2;
 	private static final int NUM_HIDDEN_LAYERS = 2;
-	private static final double LEARNING_RATE = 0.2;
+	private static final double LEARNING_RATE = 0.1;
 	
 	/**
 	 * Input node
@@ -67,7 +67,7 @@ public class NeuralNet {
 			layerInput[i] = new Input();
 			layerInput[i].weights = new double[LAYER_SIZE_HIDDEN];
 			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
-				layerInput[i].weights[j] = 0.01 + random.nextDouble() * 8;
+				layerInput[i].weights[j] = 0.01 + (random.nextDouble() * 8 / 100);
 			}
 		}
 		
@@ -78,13 +78,13 @@ public class NeuralNet {
 				if(i != NUM_HIDDEN_LAYERS - 1) {
 					layerHidden[i][j].weights = new double[LAYER_SIZE_HIDDEN];
 					for(int k = 0; k < LAYER_SIZE_HIDDEN; k++) {
-						layerHidden[i][j].weights[k] = 0.01 + random.nextDouble() * 8;
+						layerHidden[i][j].weights[k] = 0.01 + (random.nextDouble() * 8 / 100);
 					}
 				} else {
 					// last hidden layer connected to output layer
 					layerHidden[i][j].weights = new double[LAYER_SIZE_OUTPUT];
 					for(int k = 0; k < LAYER_SIZE_OUTPUT; k++) {
-						layerHidden[i][j].weights[k] = 0.01 + random.nextDouble() * 8;
+						layerHidden[i][j].weights[k] = 0.01 + (random.nextDouble() * 8 / 100);
 					}
 				}
 			}
@@ -102,7 +102,7 @@ public class NeuralNet {
 	 * @param x
 	 */
 	private double sigmoid(double x) {
-		return (1 / (1 + Math.exp(-x)));
+		return 1 / (1 + Math.exp(-x));
 	}
 	
 	/**
@@ -170,25 +170,26 @@ public class NeuralNet {
 		}
 		
 		// fix weights in input layer
-		for(int i = 0; i < LAYER_SIZE_INPUT; i++) {
-			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
-				layerInput[i].weights[j] += LEARNING_RATE * layerHidden[0][j].error * layerInput[i].value;
+		for(int i = 0; i < LAYER_SIZE_HIDDEN; i++) {
+			for(int j = 0; j < LAYER_SIZE_INPUT; j++) {
+				layerInput[j].weights[i] += LEARNING_RATE * layerHidden[0][i].error * layerInput[j].value;
 			}
 		}
 		
 		// fix weights in hidden layers
-		for(int i = 0; i < NUM_HIDDEN_LAYERS; i++) {
+		for(int i = 0; i < NUM_HIDDEN_LAYERS - 1; i++) {
 			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
-				if(i != NUM_HIDDEN_LAYERS - 1) {
-					for(int k = 0; k < LAYER_SIZE_HIDDEN; k++) {
-						layerHidden[i][j].weights[k] = LEARNING_RATE * layerHidden[i+1][k].error * layerHidden[i][j].output;
-					}
-				} else {
-					// last hidden layer; calculate from output layer
-					for(int k = 0; k < LAYER_SIZE_OUTPUT; k++) {
-						layerHidden[i][j].weights[k] = LEARNING_RATE * layerOutput[k].error * layerHidden[i][j].output;
-					}
+				for(int k = 0; k < LAYER_SIZE_HIDDEN; k++) {
+					layerHidden[i][k].weights[j] += LEARNING_RATE * layerHidden[i+1][k].error * layerHidden[i][j].output;
 				}
+			}
+		}
+		
+		// fix weights in output layer
+		int lastHidden = NUM_HIDDEN_LAYERS - 1;
+		for(int i = 0; i < LAYER_SIZE_OUTPUT; i++) {
+			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
+				layerHidden[lastHidden][j].weights[i] += LEARNING_RATE * layerOutput[i].error * layerHidden[lastHidden][j].output;
 			}
 		}
 	}

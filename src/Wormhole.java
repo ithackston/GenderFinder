@@ -3,6 +3,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * class Wormhole
@@ -111,6 +112,7 @@ public class Wormhole {
 				trainSet = new ArrayList<Face>();
 				read(dirNameMale,Face.Facetype.male,trainSet);
 				read(dirNameFemale,Face.Facetype.female,trainSet);
+				trainSet = shuffle(trainSet);
 				NN.initialize();
 				train();
 			}
@@ -225,6 +227,21 @@ public class Wormhole {
 				System.out.println("\t"+i+"\t"+error);
 			//}
 		} while(error > MAX_ERROR && i < MAX_ITERATIONS);
+	}
+	
+	/*
+	 * Fisher-Yates Shuffle 
+	 */
+	private static ArrayList<Face> shuffle(ArrayList<Face> set) {
+		Random rand = new Random();
+		Face temp;
+		for(int i = set.size() - 1; i > 0; i--) {
+			int j = rand.nextInt(i);
+			temp = set.get(j);
+			set.set(j,set.get(i));
+			set.set(i,temp);
+		}
+		return set;
 	}
 	
 	/**
