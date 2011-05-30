@@ -13,7 +13,7 @@ public class Wormhole {
 	public static final String DEFAULT_DIRNAME_M = "Male/";		//default directory names
 	public static final String DEFAULT_DIRNAME_F = "Female/";
 	public static final String DEFAULT_DIRNAME_T = "Test/";
-	public static final double MAX_ERROR = 1.0;
+	public static final double MAX_ERROR = 4.0;
 	public static final int MAX_ITERATIONS = 1000;
 	
 	private static NeuralNet NN;
@@ -222,14 +222,22 @@ public class Wormhole {
 			}
 			i++;
 			
-			//if(i % 4 == 0) {
-				// print training status every 4 iterations
-				System.out.println("\t"+i+"\t"+error);
-			//}
+			System.out.println("\t"+i+"\t"+error);
 		} while(error > MAX_ERROR && i < MAX_ITERATIONS);
 	}
 	
-	/*
+	/**
+	 * Test the network on the testSet.
+	 */
+	private static void test() {
+		System.out.println("Testing " + countTest + " faces:");
+		System.out.println("\ti\tname\test. sex");
+		for(int i = 0; i < testSet.size(); i++) {
+			System.out.println("\t"+i+"\t"+testSet.get(i)+"\t"+NN.test(testSet.get(i)));
+		}
+	}
+	
+	/**
 	 * Fisher-Yates Shuffle 
 	 */
 	private static ArrayList<Face> shuffle(ArrayList<Face> set) {
@@ -244,10 +252,5 @@ public class Wormhole {
 		return set;
 	}
 	
-	/**
-	 * Test the network on the testSet.
-	 */
-	private static boolean test() {
-		return false;
-	}
+	
 }

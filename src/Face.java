@@ -51,7 +51,7 @@ public class Face {
 		return grid[width * (y - 1) + (x - 1)]; 
 	}
 	
-	public String getName() {
+	public String toString() {
 		return name;
 	}
 }

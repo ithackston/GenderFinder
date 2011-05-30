@@ -10,8 +10,8 @@ public class NeuralNet {
 	private static final int LAYER_SIZE_INPUT = Face.width * Face.height;
 	private static final int LAYER_SIZE_HIDDEN = 40;
 	private static final int LAYER_SIZE_OUTPUT = 2;
-	private static final int NUM_HIDDEN_LAYERS = 2;
-	private static final double LEARNING_RATE = 0.1;
+	private static final int NUM_HIDDEN_LAYERS = 1;
+	private static final double LEARNING_RATE = 0.2;
 	
 	/**
 	 * Input node
@@ -152,7 +152,7 @@ public class NeuralNet {
 	 */
 	public void backPropagate() {
 		// fix errors in hidden layers
-		for(int i = 0; i < NUM_HIDDEN_LAYERS; i++) {
+		for(int i = NUM_HIDDEN_LAYERS - 1; i > -1; i--) {
 			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
 				double total = 0.0;
 				if(i != NUM_HIDDEN_LAYERS - 1) {
