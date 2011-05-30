@@ -27,8 +27,7 @@ public class Wormhole {
 	/**
 	 * Prints usage instructions.
 	 */
-	public static void helpPrinter()
-	{
+	public static void helpPrinter() {
 		System.out.println("  Command Line Parameters are as follows:");
 		System.out.println("    \"--help\" : You're looking at it");
 		System.out.println("    \"-train\" : Train the network with data");
@@ -132,7 +131,7 @@ public class Wormhole {
 	 * Gets and returns the valid face files of the given directory name.
 	 * @param dirName
 	 */
-	private static String[] getContents(String dirName) {
+	public static String[] getContents(String dirName) {
 		File dir = new File(dirName);
 
 		FilenameFilter filter = new FilenameFilter() {
@@ -150,7 +149,7 @@ public class Wormhole {
 	 * @param dirName
 	 * @throws IOException
 	 */
-	private static void read(String dirName, Face.Facetype type, ArrayList<Face> set) throws IOException {
+	public static void read(String dirName, Face.Facetype type, ArrayList<Face> set) throws IOException {
 		String[] images = getContents(dirName);
 		
 		if(images == null) {
@@ -187,7 +186,7 @@ public class Wormhole {
 	 * @param path
 	 * @throws IOException
 	 */
-	private static String readFile(String path) throws IOException {
+	public static String readFile(String path) throws IOException {
 		FileInputStream stream = new FileInputStream(new File(path));
 		try {
 			FileChannel fc = stream.getChannel();
