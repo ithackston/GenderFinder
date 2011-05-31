@@ -13,7 +13,7 @@ public class Wormhole {
 	public static final String DEFAULT_DIRNAME_M = "Male/";		//default directory names
 	public static final String DEFAULT_DIRNAME_F = "Female/";
 	public static final String DEFAULT_DIRNAME_T = "Test/";
-	public static final double MAX_ERROR = 4.0;					//10female.txt works at 4.0
+	public static final double MAX_ERROR = 5.0;					//10female.txt works at 4.0
 	public static final int MAX_ITERATIONS = 1000;				//it would take 2 hours for this to happen... 
 	public static final int NUM_FOLDS = 5;						//number of folds to use in cross validation
 	
@@ -245,6 +245,8 @@ public class Wormhole {
 		int testSize = partSize + trainSet.size() % NUM_FOLDS;
 		LinkedList<Double> errorT = new LinkedList<Double>();
 		LinkedList<Double> errorV = new LinkedList<Double>();
+		LinkedList<Double> accT = new LinkedList<Double>();
+		LinkedList<Double> accV = new LinkedList<Double>();
 		
 		System.out.println("Training neural network (with " + NUM_FOLDS + "-fold cross-validation) on " +
 				countMale +" male faces and " + countFemale + " female faces:");
@@ -274,16 +276,48 @@ public class Wormhole {
 				
 				if(fold > 0) {
 					System.out.println("\t"+i+"\t"+fold+"\t"+(et-errorT.get(i))+"\t"+(ev-errorV.get(i)));
+					accT.add(i,(et-errorT.get(i)));
+					accV.add(i,(ev-errorV.get(i)));
 				} else {
 					System.out.println("\t"+i+"\t"+fold+"\t"+et+"\t"+ev);
+					accT.add(i,et);
+					accV.add(i,ev);
 				}
 				
 				NN.saveHypothesis();
 				errorT.add(i,et);
 				errorV.add(i,ev);
+				
 			}
 			
 			if(et/NUM_FOLDS < MAX_ERROR || i > MAX_ITERATIONS) {
+				System.out.println("Training criteria met. Calculating mean and standard deviation.");
+				// calculate mean and standard deviation of test and training set accuracies
+				double totalT = 0.0, meanT = 0.0,sdT = 0.0;
+				double totalV = 0.0, meanV = 0.0,sdV = 0.0;
+				for(int k = 0; k < accT.size(); k++) {
+					totalT += accT.get(k);
+				}
+				meanT = totalT / accT.size();
+				for(int k = 0; k < accV.size(); k++) {
+					totalV += accV.get(k);
+				}
+				meanV = totalV / accV.size();
+				totalT = 0.0;
+				totalV = 0.0;
+				for(int k = 0; k < accT.size(); k++) {
+					totalT += Math.pow(accT.get(k) - meanT, 2);
+				}
+				sdT = Math.pow(totalT / accT.size(),.5);
+				for(int k = 0; k < accV.size(); k++) {
+					totalV += Math.pow(accV.get(k) - meanV, 2);
+				}
+				sdV = Math.pow(totalV / accV.size(),.5);
+				System.out.println("\tset\tmean\tstandard deviation");
+				System.out.println("\ttrain\t"+meanT+"\t"+sdT);
+				System.out.println("\ttest\t"+meanV+"\t"+sdV);
+				
+				
 				// load the best known configuration
 				int bestsize = 0;
 				double min = errorV.get(bestsize);
@@ -320,7 +354,7 @@ public class Wormhole {
 	 */
 	private static void test() {
 		System.out.println("Testing " + countTest + " faces:");
-		System.out.println("\ti\tname\t\test. sex\terror\tconfidence");
+		System.out.println("\ti\tname\t\tgender\terror\tconfidence");
 		for(int i = 0; i < testSet.size(); i++) {
 			NeuralNet.Output best = NN.test(testSet.get(i));
 			double confidence = Math.pow(best.target - best.output, 2);
