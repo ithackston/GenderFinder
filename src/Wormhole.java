@@ -221,6 +221,8 @@ public class Wormhole {
 				countFemale + " female faces:");
 		System.out.println("\ti\terror");
 		
+		shuffle(trainSet);
+		
 		do {
 			error = 0.0;
 			for(int j = 0; j < trainSet.size(); j++) {
@@ -281,9 +283,6 @@ public class Wormhole {
 				errorV.add(i,ev);
 			}
 			
-			
-			
-			
 			if(et/NUM_FOLDS < MAX_ERROR || i > MAX_ITERATIONS) {
 				// load the best known configuration
 				int bestsize = 0;
@@ -321,7 +320,7 @@ public class Wormhole {
 	 */
 	private static void test() {
 		System.out.println("Testing " + countTest + " faces:");
-		System.out.println("\ti\tname\t\t\t\t\t\t\t\t\t\test. sex\terror\tconfidence");
+		System.out.println("\ti\tname\t\test. sex\terror\tconfidence");
 		for(int i = 0; i < testSet.size(); i++) {
 			NeuralNet.Output best = NN.test(testSet.get(i));
 			double confidence = Math.pow(best.target - best.output, 2);
