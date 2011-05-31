@@ -282,6 +282,10 @@ public class Wormhole {
 		}
 	}
 	
+	/**
+	 * Partition set into a test set and a training set.
+	 */
+	@SuppressWarnings("unchecked") //Java complains when you use a cast on a clone()'d object.
 	private static void partition(LinkedList<Face> set,LinkedList<Face> train,LinkedList<Face> test,int fold,int partSize, int testSize) {
 		train = (LinkedList<Face>) set.clone();
 		for(int i = fold * partSize; i < fold * partSize + testSize; i++) {
@@ -295,9 +299,9 @@ public class Wormhole {
 	 */
 	private static void test() {
 		System.out.println("Testing " + countTest + " faces:");
-		System.out.println("\ti\tname\test. sex");
+		System.out.println("\ti\tname\t\t\t\t\t\t\t\t\t\test. sex\terror");
 		for(int i = 0; i < testSet.size(); i++) {
-			System.out.println("\t"+i+"\t"+testSet.get(i)+"\t"+NN.test(testSet.get(i)));
+			System.out.println("\t"+i+"\t"+testSet.get(i)+"\t"+NN.test(testSet.get(i))+"\t"+NN.getError());
 		}
 	}
 	
