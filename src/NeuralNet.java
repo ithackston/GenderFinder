@@ -1,3 +1,4 @@
+import java.util.LinkedList;
 import java.util.Random;
 
 /**
@@ -8,7 +9,7 @@ import java.util.Random;
 public class NeuralNet {
 	// Warning: modifying some of these values may cause errors in the code.
 	private static final int LAYER_SIZE_INPUT = Face.width * Face.height;
-	private static final int LAYER_SIZE_HIDDEN = 40;
+	private static final int LAYER_SIZE_HIDDEN = 36;
 	private static final int LAYER_SIZE_OUTPUT = 2;
 	private static final int NUM_HIDDEN_LAYERS = 1;
 	private static final double LEARNING_RATE = 0.2;
@@ -42,7 +43,22 @@ public class NeuralNet {
 		public Face.Facetype value;
 	};
 	
-	// network layers
+	public class Configuration {
+		public Input[] layerInput;
+		public Sigmoid[][] layerHidden;
+		public Output[] layerOutput;
+		
+		public Configuration(Input[] lI,Sigmoid[][] lH,Output[] lO) {
+			layerInput = (Input[]) lI.clone();
+			layerHidden = (Sigmoid[][]) lH.clone();
+			layerOutput = (Output[]) lO.clone();
+		}
+	};
+	
+	// list of generated configurations
+	private LinkedList<Configuration> hypothesis; 
+	
+	// current network configuration
 	private Input[] layerInput;
 	private Sigmoid[][] layerHidden;
 	private Output[] layerOutput;
@@ -54,6 +70,7 @@ public class NeuralNet {
 		layerInput = new Input[LAYER_SIZE_INPUT];
 		layerHidden = new Sigmoid[NUM_HIDDEN_LAYERS][LAYER_SIZE_HIDDEN];
 		layerOutput = new Output[LAYER_SIZE_OUTPUT];
+		hypothesis = new LinkedList<Configuration>();
 	}
 	
 	/**
@@ -180,8 +197,9 @@ public class NeuralNet {
 		for(int i = 0; i < NUM_HIDDEN_LAYERS - 1; i++) {
 			for(int j = 0; j < LAYER_SIZE_HIDDEN; j++) {
 				for(int k = 0; k < LAYER_SIZE_HIDDEN; k++) {
-					layerHidden[i][k].weights[j] += LEARNING_RATE * layerHidden[i+1][k].error * layerHidden[i][j].output;
+					layerHidden[i][k].weights[j] += LEARNING_RATE * layerHidden[i+1][j].error * layerHidden[i][k].output;
 				}
+				
 			}
 		}
 		
@@ -195,9 +213,27 @@ public class NeuralNet {
 	}
 	
 	/**
+	 * Save the current network configuration (hypothesis)
+	 */
+	public void saveHypothesis() {
+		Configuration h = new Configuration(layerInput,layerHidden,layerOutput);
+		hypothesis.add(h);
+	}
+	
+	/**
+	 * Load a saved network configuration
+	 */
+	public void setHypothesis(int complexity) {
+		Configuration h = hypothesis.get(complexity);
+		layerInput = h.layerInput;
+		layerHidden = h.layerHidden;
+		layerOutput = h.layerOutput;
+	}
+	
+	/**
 	 * Forward propagate a test Face and return the Facetype (gender).
 	 */
-	public Face.Facetype test(Face face) {
+	public Output test(Face face) {
 		// copy input
 		for(int i = 0; i < LAYER_SIZE_INPUT; i++) {
 			layerInput[i].value = face.grid[i];
@@ -223,8 +259,8 @@ public class NeuralNet {
 		}
 		
 		// calculate output
-		double max = -1;
-		Face.Facetype output = Face.Facetype.test;
+		Output best = new Output();
+		best.output = -1;
 		
 		for(int i = 0; i < LAYER_SIZE_OUTPUT; i++) {
 			double total = 0.0;
@@ -236,13 +272,12 @@ public class NeuralNet {
 			layerOutput[i].target = layerOutput[i].value == face.type ? 1.0 : 0.0;
 			layerOutput[i].error = (layerOutput[i].target - layerOutput[i].output) * layerOutput[i].output * (1 - layerOutput[i].output);
 			
-			if(layerOutput[i].output > max) {
-				max = layerOutput[i].output;
-				output = layerOutput[i].value;
+			if(layerOutput[i].output > best.output) {
+				best = layerOutput[i];
 			}
 		}
 		
-		return output;
+		return best;
 	}
 	
 	public double getError() {

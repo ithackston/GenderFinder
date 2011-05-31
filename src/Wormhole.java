@@ -1,9 +1,7 @@
-import java.awt.List;
 import java.io.*;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -193,7 +191,7 @@ public class Wormhole {
 	}
 	
 	/**
-	 * Efficiently read file and return string.
+	 * Read file and return string.
 	 * http://stackoverflow.com/questions/326390/how-to-create-a-java-string-from-the-contents-of-a-file
 	 * @param path
 	 * @throws IOException
@@ -248,11 +246,13 @@ public class Wormhole {
 		
 		System.out.println("Training neural network (with " + NUM_FOLDS + "-fold cross-validation) on " +
 				countMale +" male faces and " + countFemale + " female faces:");
-		System.out.println("\ti\terror");
+		System.out.println("\ti\tfold\terror_t\t\t\terror_v");
 		
 		while(true) {
 			double et = 0.0;
 			double ev = 0.0;
+			
+			shuffle(trainSet);
 			
 			for(int fold = 0; fold < NUM_FOLDS; fold++){
 				LinkedList<Face> train = new LinkedList<Face>();
@@ -269,13 +269,34 @@ public class Wormhole {
 					NN.test(test.get(j));
 					ev += NN.getError();
 				}
+				
+				if(fold > 0) {
+					System.out.println("\t"+i+"\t"+fold+"\t"+(et-errorT.get(i))+"\t"+(ev-errorV.get(i)));
+				} else {
+					System.out.println("\t"+i+"\t"+fold+"\t"+et+"\t"+ev);
+				}
+				
+				NN.saveHypothesis();
+				errorT.add(i,et);
+				errorV.add(i,ev);
 			}
 			
-			errorT.add(i,et);
-			errorV.add(i,ev);
 			
-			if(et < MAX_ERROR || i > MAX_ITERATIONS) {
-				
+			
+			
+			if(et/NUM_FOLDS < MAX_ERROR || i > MAX_ITERATIONS) {
+				// load the best known configuration
+				int bestsize = 0;
+				double min = errorV.get(bestsize);
+				for(int size = 0; size < errorV.size(); size++) {
+					if(errorV.get(size) < min) {
+						bestsize = size;
+						min = errorV.get(size);
+					}
+				}
+				System.out.println("Loading best known configuration (mean square error: "+min/NUM_FOLDS+")");
+				NN.setHypothesis(bestsize);
+				return;
 			}
 			
 			i++;
@@ -285,12 +306,13 @@ public class Wormhole {
 	/**
 	 * Partition set into a test set and a training set.
 	 */
-	@SuppressWarnings("unchecked") //Java complains when you use a cast on a clone()'d object.
 	private static void partition(LinkedList<Face> set,LinkedList<Face> train,LinkedList<Face> test,int fold,int partSize, int testSize) {
-		train = (LinkedList<Face>) set.clone();
-		for(int i = fold * partSize; i < fold * partSize + testSize; i++) {
-			test.add(set.get(i));
-			train.remove(i);
+		for(int i = 0; i < set.size(); i++) {
+			if(i >= fold * partSize && i < fold * partSize + testSize - 1) {
+				test.add(set.get(i));
+			} else {
+				train.add(set.get(i));
+			}
 		}
 	}
 	
@@ -299,9 +321,11 @@ public class Wormhole {
 	 */
 	private static void test() {
 		System.out.println("Testing " + countTest + " faces:");
-		System.out.println("\ti\tname\t\t\t\t\t\t\t\t\t\test. sex\terror");
+		System.out.println("\ti\tname\t\t\t\t\t\t\t\t\t\test. sex\terror\tconfidence");
 		for(int i = 0; i < testSet.size(); i++) {
-			System.out.println("\t"+i+"\t"+testSet.get(i)+"\t"+NN.test(testSet.get(i))+"\t"+NN.getError());
+			NeuralNet.Output best = NN.test(testSet.get(i));
+			double confidence = Math.pow(best.target - best.output, 2);
+			System.out.println("\t"+i+"\t"+testSet.get(i)+"\t"+best.value+"\t"+NN.getError()+"\t"+confidence);
 		}
 	}
 	

@@ -58,7 +58,7 @@ public class Face {
 	}
 	
 	public String toString() {
-		return name;
+		return name.substring(name.lastIndexOf('/'));
 	}
 	
 	public void toImage() {
