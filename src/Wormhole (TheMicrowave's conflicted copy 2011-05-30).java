@@ -1,11 +1,8 @@
-import java.awt.List;
 import java.io.*;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.Random;
 
 /**
  * class Wormhole
@@ -15,13 +12,12 @@ public class Wormhole {
 	public static final String DEFAULT_DIRNAME_M = "Male/";		//default directory names
 	public static final String DEFAULT_DIRNAME_F = "Female/";
 	public static final String DEFAULT_DIRNAME_T = "Test/";
-	public static final double MAX_ERROR = 4.0;					//10female.txt works at 4.0
-	public static final int MAX_ITERATIONS = 1000;				//it would take 2 hours for this to happen... 
-	public static final int NUM_FOLDS = 5;						//number of folds to use in cross validation
+	public static final double MAX_ERROR = 1.0;
+	public static final int MAX_ITERATIONS = 1000;
 	
 	private static NeuralNet NN;
-	private static LinkedList<Face> trainSet;
-	private static LinkedList<Face> testSet;
+	private static ArrayList<Face> trainSet;
+	private static ArrayList<Face> testSet;
 	
 	private static int countMale;
 	private static int countFemale;
@@ -30,7 +26,8 @@ public class Wormhole {
 	/**
 	 * Prints usage instructions.
 	 */
-	public static void helpPrinter() {
+	public static void helpPrinter()
+	{
 		System.out.println("  Command Line Parameters are as follows:");
 		System.out.println("    \"--help\" : You're looking at it");
 		System.out.println("    \"-train\" : Train the network with data");
@@ -57,7 +54,6 @@ public class Wormhole {
 		String dirNameTest = DEFAULT_DIRNAME_T;
 		boolean train = false;
 		boolean test = false;
-		boolean fold = false;
 		
 		countMale = 0;
 		countFemale = 0;
@@ -90,9 +86,6 @@ public class Wormhole {
 						throw new IllegalArgumentException(dirNameTest + " is not a valid directory.");
 					}
 					i++;
-				} else if(args[i].equalsIgnoreCase("-fold")) {
-					train = true;
-					fold = true;
 				} else if(args[i].equalsIgnoreCase("-train")) {
 					train = true;
 				} else if(args[i].equalsIgnoreCase("-test")) {
@@ -115,21 +108,15 @@ public class Wormhole {
 			NN = new NeuralNet();
 			
 			if(train) {
-				trainSet = new LinkedList<Face>();
+				trainSet = new ArrayList<Face>();
 				read(dirNameMale,Face.Facetype.male,trainSet);
 				read(dirNameFemale,Face.Facetype.female,trainSet);
-				trainSet = shuffle(trainSet); // interleave males and females
 				NN.initialize();
-				
-				if(fold) {
-					fold();
-				} else {
-					train();
-				}
+				train();
 			}
 			
 			if(test) {
-				testSet = new LinkedList<Face>();
+				testSet = new ArrayList<Face>();
 				read(dirNameTest,Face.Facetype.test,testSet);
 				test();
 			}
@@ -143,7 +130,7 @@ public class Wormhole {
 	 * Gets and returns the valid face files of the given directory name.
 	 * @param dirName
 	 */
-	public static String[] getContents(String dirName) {
+	private static String[] getContents(String dirName) {
 		File dir = new File(dirName);
 
 		FilenameFilter filter = new FilenameFilter() {
@@ -161,7 +148,7 @@ public class Wormhole {
 	 * @param dirName
 	 * @throws IOException
 	 */
-	public static void read(String dirName, Face.Facetype type, LinkedList<Face> set) throws IOException {
+	private static void read(String dirName, Face.Facetype type, ArrayList<Face> set) throws IOException {
 		String[] images = getContents(dirName);
 		
 		if(images == null) {
@@ -198,7 +185,7 @@ public class Wormhole {
 	 * @param path
 	 * @throws IOException
 	 */
-	public static String readFile(String path) throws IOException {
+	private static String readFile(String path) throws IOException {
 		FileInputStream stream = new FileInputStream(new File(path));
 		try {
 			FileChannel fc = stream.getChannel();
@@ -213,6 +200,7 @@ public class Wormhole {
 	
 	/**
 	 * Train the network with the trainSet.
+	 * Use 5-fold cross evaluation at some point.
 	 */
 	private static void train() {
 		double error = 0.0;
@@ -232,89 +220,17 @@ public class Wormhole {
 			}
 			i++;
 			
-			System.out.println("\t"+i+"\t"+error);
+			//if(i % 4 == 0) {
+				// print training status every 4 iterations
+				System.out.println("\t"+i+"\t"+error);
+			//}
 		} while(error > MAX_ERROR && i < MAX_ITERATIONS);
-	}
-	
-	/**
-	 * Use 5-fold cross evaluation to train the network with the trainSet.
-	 */
-	private static void fold() {
-		int i = 0;
-		int partSize = trainSet.size() / NUM_FOLDS;
-		int testSize = partSize + trainSet.size() % NUM_FOLDS;
-		LinkedList<Double> errorT = new LinkedList<Double>();
-		LinkedList<Double> errorV = new LinkedList<Double>();
-		
-		System.out.println("Training neural network (with " + NUM_FOLDS + "-fold cross-validation) on " +
-				countMale +" male faces and " + countFemale + " female faces:");
-		System.out.println("\ti\terror");
-		
-		while(true) {
-			double et = 0.0;
-			double ev = 0.0;
-			
-			for(int fold = 0; fold < NUM_FOLDS; fold++){
-				LinkedList<Face> train = new LinkedList<Face>();
-				LinkedList<Face> test = new LinkedList<Face>();
-				partition(trainSet,train,test,fold,partSize,testSize);
-				
-				for(int j = 0; j < train.size(); j++) {
-					NN.forwardPropagate(train.get(j));
-					NN.backPropagate();
-					et += NN.getError();
-				}
-				
-				for(int j = 0; j < test.size(); j++) {
-					NN.test(test.get(j));
-					ev += NN.getError();
-				}
-			}
-			
-			errorT.add(i,et);
-			errorV.add(i,ev);
-			
-			if(et < MAX_ERROR || i > MAX_ITERATIONS) {
-				
-			}
-			
-			i++;
-		}
-	}
-	
-	private static void partition(LinkedList<Face> set,LinkedList<Face> train,LinkedList<Face> test,int fold,int partSize, int testSize) {
-		train = (LinkedList<Face>) set.clone();
-		for(int i = fold * partSize; i < fold * partSize + testSize; i++) {
-			test.add(set.get(i));
-			train.remove(i);
-		}
 	}
 	
 	/**
 	 * Test the network on the testSet.
 	 */
-	private static void test() {
-		System.out.println("Testing " + countTest + " faces:");
-		System.out.println("\ti\tname\test. sex");
-		for(int i = 0; i < testSet.size(); i++) {
-			System.out.println("\t"+i+"\t"+testSet.get(i)+"\t"+NN.test(testSet.get(i)));
-		}
+	private static boolean test() {
+		return false;
 	}
-	
-	/**
-	 * Fisher-Yates Shuffle 
-	 */
-	private static LinkedList<Face> shuffle(LinkedList<Face> set) {
-		Random rand = new Random();
-		Face temp;
-		for(int i = set.size() - 1; i > 0; i--) {
-			int j = rand.nextInt(i);
-			temp = set.get(j);
-			set.set(j,set.get(i));
-			set.set(i,temp);
-		}
-		return set;
-	}
-	
-	
 }

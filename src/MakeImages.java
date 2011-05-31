@@ -1,10 +1,11 @@
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 
 public class MakeImages {
 	public static final String DEFAULT_DIRNAME_T = "Test/";
-	private static ArrayList<Face> set;
+	private static LinkedList<Face> set;
 	
 	/**
 	 * Prints usage instructions.
@@ -53,7 +54,7 @@ public class MakeImages {
 		}
 		
 		try {
-			set = new ArrayList<Face>();
+			set = new LinkedList<Face>();
 			Wormhole.read(dirname,Face.Facetype.test,set);
 			for(int i = 0; i < set.size(); i++) {
 				set.get(i).toImage();
